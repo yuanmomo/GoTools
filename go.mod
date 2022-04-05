@@ -1,4 +1,4 @@
-module github.com/binazhifu/GoTools
+module github.com/bianzhifu/GoTools
 
 go 1.17
 
