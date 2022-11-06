@@ -2,12 +2,15 @@ package http
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"github.com/antlabs/pcurl"
 	"github.com/sirupsen/logrus"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -69,4 +72,36 @@ func HttpDefaultString(req *http.Request) (code int, bodystr string) {
 func CurlToRequest(curlcmd string) (error, *http.Request) {
 	req, err := pcurl.ParseAndRequest(curlcmd)
 	return err, req
+}
+
+func HttpGet(url string) string {
+	resp, err := Client.Get(url)
+	if err != nil {
+		logrus.Errorln(err)
+		return ""
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	return string(body)
+}
+
+func HttpJSON(url string, jsonObj interface{}) {
+	response := HttpGet(url)
+	json.Unmarshal([]byte(response), &jsonObj)
+}
+
+func HttpWithReqJSON(url string, requestBody string, jsonObj interface{}) {
+	if len(strings.TrimSpace(requestBody)) == 0 {
+		requestBody = ""
+	}
+	request := strings.NewReader(requestBody)
+	resp, err := Client.Post(url, "application/json", request)
+	if err != nil {
+		logrus.Errorln(err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	response := string(body)
+	json.Unmarshal([]byte(response), &jsonObj)
 }
